@@ -30,6 +30,7 @@ sub read_image {
 	$im->set_datatype($PDL::Types::PDL_B);
 	$im->setdims([ $rows, $cols, $num]);
 	print "typeof to_dump " . ref($im) . " and length " . PDL::nelem($im) . "\n";
+	$im = to4d($im);
 	return $im;
 }
 
@@ -42,17 +43,16 @@ $label->setdims([ 10 ]);
 read $flbl, ${$label->get_dataref}, 10;
 $label->upd_data();
 
-my $data = mx->sym->Variable('data');
 my $test_iter = mx->io->NDArrayIter(
-    data => to4d($im),
+    data => $im,
     label => $label,
 );
 
-$im = to4d($im);
 
 
 
 # Load IA model
+my $data = mx->sym->Variable('data');
 my $mlp = nn_perceptron($data);
 my $model = mx->mod->Module(symbol=> $mlp,);
 # allocate memory given the input data and label shapes
