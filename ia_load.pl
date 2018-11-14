@@ -34,37 +34,45 @@ sub read_image {
 	return $im;
 }
 
-my $im = read_image;
+# Load PDL label
+sub read_label {
+	open my($flbl), '<:gzip', download_data(1);
+	my $label = PDL->new();
+	$label->set_datatype($PDL::Types::PDL_B);
+	$label->setdims([ 10 ]);
+	read $flbl, ${$label->get_dataref}, 10;
+	$label->upd_data();
+	return $label;
+}
 
-open my($flbl), '<:gzip', download_data(1);
-my $label = PDL->new();
-$label->set_datatype($PDL::Types::PDL_B);
-$label->setdims([ 10 ]);
-read $flbl, ${$label->get_dataref}, 10;
-$label->upd_data();
 
+
+# Score with the accuracy metric
 my $test_iter = mx->io->NDArrayIter(
-    data => $im,
-    label => $label,
+    data => read_image,
+    label => read_label,
 );
-
 
 
 
 # Load IA model
-my $data = mx->sym->Variable('data');
-my $mlp = nn_perceptron($data);
-my $model = mx->mod->Module(symbol=> $mlp,);
-# allocate memory given the input data and label shapes
-$model->bind(
-  data_shapes => $test_iter->provide_data, 
-  label_shapes => $test_iter->provide_label,
-);
-my ($sym, $arg_params, $aux_params ) = $model->load_checkpoint('mycheckpoint.dp', 3);
-$model->set_params($arg_params, $aux_params);
+sub read_model{
+	my $data = mx->sym->Variable('data');
+	my $mlp = nn_perceptron($data);
+	my $model = mx->mod->Module(symbol=> $mlp,);
+	# allocate memory given the input data and label shapes
+	$model->bind(
+		data_shapes => $test_iter->provide_data, 
+		label_shapes => $test_iter->provide_label,
+	);
+	my ($sym, $arg_params, $aux_params ) = $model->load_checkpoint('mycheckpoint.dp', 3);
+	$model->set_params($arg_params, $aux_params);
+	return $model;
+}
 
-# Score with the accuracy metric
-my $val = $model->predict($test_iter);
+
+my $model = read_model;
+my $val = read_model->predict($test_iter);
 say "score is ", $val->aspdl;
 
 
