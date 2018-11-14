@@ -5,7 +5,8 @@ use strict; use warnings; use v5.26;
 
 use LWP::UserAgent ();  # For download
 use AI::MXNet ('mx', 'nd');   # For Neuronal Networks
-use PDL ();             # Perl Data Language for Images "parsing"
+use PDL;             # Perl Data Language for Images "parsing"
+use PDL::Math;
 use PDL::IO::Image;     # To dump the images
 use PDL::IO::FlexRaw;    # To read images
 
@@ -73,7 +74,11 @@ sub read_model{
 
 my $model = read_model;
 my $val = read_model->predict($test_iter);
-say "score is ", $val->aspdl;
+
+my $pdl = $val->aspdl;
+my $flex = pdl(0.01);
+my $pdl = PDL::Math::floor($pdl / $flex) * $flex ;
+say "score is ", $pdl;
 
 
 
