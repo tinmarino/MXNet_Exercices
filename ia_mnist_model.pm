@@ -36,8 +36,8 @@ sub to4d {
 sub print_pdl{
     my $pdl = shift;
     my $flex = pdl(0.01);
-    my $pdl = PDL::Math::floor($pdl / $flex) * $flex ;
-    say "score is ", $pdl;
+    $pdl = PDL::Math::floor($pdl / $flex) * $flex ;
+    say "Score matrix:", $pdl;
 }
 
 
@@ -114,5 +114,3 @@ sub nn_conv {
     my $softmax = mx->symbol->SoftmaxOutput(data => $fc3, name => 'softmax');
     return $softmax;
 }
-
-

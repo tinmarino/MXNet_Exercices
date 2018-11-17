@@ -23,8 +23,6 @@ say "--> Starting Script V1.0";
 # Load PDL image
 sub read_image {
 	my $im = readflex('testmain.dp');
-	#open my($test1), "test1.dp";
-	#my $im = PDL->new();
 	my $rows = 28;
 	my $cols = 28;
 	my $num = 10;
