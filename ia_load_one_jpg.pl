@@ -16,12 +16,11 @@ use lib dirname (__FILE__);
 # Include models
 use ia_mnist_model qw/nn_perceptron/;
 
-
-
 sub usage{
     "Usage: " . __FILE__ . " image_to_read.jpg";
 }
 
+# Strbuild info <- PDL::IO::Image
 sub get_image_info{
     my $pimage1 = shift;
     use overload '.' => sub { shift . "\n" . shift  };
@@ -34,25 +33,20 @@ sub get_image_info{
         . 'bpp         = ' . $pimage1->get_bpp . "\n";
 }
 
+
 # Read image on HD and convert it to 1 bytes x 28x28
 sub read_image{
-    # In
+    # 0/ In
     my $path = $ARGV[0];
     unless ($path) {die "Error: " . usage}
 
-    # Read HD
+    # 1/ Read HD
     my $im = PDL::IO::Image->new_from_file($path);
     say "Readen im: " . get_image_info $im;
-        # , 'JPEG', PDL::IO::Image::JPEG_QUALITYSUPERB);
 
-    # Convert image
+    # 2.1/ Convert image
     $im->convert_image_type("BITMAP"); # Usually useless
     $im->rescale(28, 28);
-    # Still OK
-
-    # Shit I am in black and white mode meaning transparent or not
-    # TODO : how to knwo ? 
-
     my $b_keep_alpha = not $im->get_colors_used;
     unless ($b_keep_alpha){
         $im->color_to_8bpp;
@@ -60,7 +54,7 @@ sub read_image{
     $im->save("middle_img.png");
     say "Transformed im: " . get_image_info $im;
 
-    # Convert format
+    # 2.2/ Convert format
     my $pdl = $im->pixels_to_pdl();
     say "Initial pdl " . $pdl->info; 
 	$pdl->set_datatype($PDL::Types::PDL_B);
@@ -68,9 +62,11 @@ sub read_image{
     if ($b_keep_alpha){
         $pdl = $pdl->slice(':,:,3');
     }
+    # Force reshape for all to fall in line uselessly in 3 dims
     $pdl->reshape(28, 28, 1)->float / 255;
     say "Final pdl " . $pdl->info; 
 
+    # 3/ Ret
     return $pdl;
 }
 
