@@ -32,6 +32,15 @@ sub to4d {
     return $img->reshape(28, 28, 1, ($img->dims)[2])->float / 255;
 }
 
+
+sub print_pdl{
+    my $pdl = shift;
+    my $flex = pdl(0.01);
+    my $pdl = PDL::Math::floor($pdl / $flex) * $flex ;
+    say "score is ", $pdl;
+}
+
+
 # Return a nn fully connected <- data placeholder
 sub nn_perceptron {
   # Get the image
