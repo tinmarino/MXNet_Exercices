@@ -1,28 +1,33 @@
 use strict; use warnings; use v5.26;
-
 say "< Including mnist model module v1.0";
+
+use Log::Message::Simple qw/debug/;
+
+
+
+
 
 # Placeholder for the input layer
 my $data = mx->sym->Variable('data');
 
 
 sub download_data {
-  my $force_download = shift;
+    my $force_download = shift;
 
-  my $url='http://yann.lecun.com/exdb/mnist/';
-  my $label_url = "${url}t10k-labels-idx1-ubyte.gz";
-  my $fname = (split /\//, $url)[-1];
-  if (@_ > 1) {
-    say "I am not downloading";
+    my $url='http://yann.lecun.com/exdb/mnist/';
+    my $label_url = "${url}t10k-labels-idx1-ubyte.gz";
+    my $fname = (split /\//, $url)[-1];
+    if (@_ > 1) {
+        say "I am not downloading";
+        return $fname;
+    }
+
+    my $ua = LWP::UserAgent->new();
+    $force_download = 1 if @_ < 2;
+    if($force_download or not -f $fname) {
+        $ua->get($url, ':content_file' => $fname);
+    }
     return $fname;
-  }
-
-  my $ua = LWP::UserAgent->new();
-  $force_download = 1 if @_ < 2;
-  if($force_download or not -f $fname) {
-      $ua->get($url, ':content_file' => $fname);
-  }
-  return $fname;
 }
 
 
@@ -43,45 +48,45 @@ sub print_pdl{
 
 # Return a nn fully connected <- data placeholder
 sub nn_perceptron {
-  # Get the image
-  my($data) = @_;
-  
-  # Flatten the image
-  $data = mx->sym->Flatten(data => $data);
+    # Get the image
+    my($data) = @_;
+    
+    # Flatten the image
+    $data = mx->sym->Flatten(data => $data);
 
-  # 1/ The first fully-connected layer and the corresponding activation function
-  # TODO read the doc about how many activation type I can get (like relu)
-  # my $fc1  = mx->sym->FullyConnected(
-  #   data => $data,
-  #   name => 'fct1',
-  #   num_hidden => 128);
-  # my $act1 = mx->sym->Activation(
-  #   data => $fc1,
-  #   name => 'relu1',
-  #   act_type => "relu");
+    # 1/ The first fully-connected layer and the corresponding activation function
+    # TODO read the doc about how many activation type I can get (like relu)
+    # my $fc1    = mx->sym->FullyConnected(
+    #     data => $data,
+    #     name => 'fct1',
+    #     num_hidden => 128);
+    # my $act1 = mx->sym->Activation(
+    #     data => $fc1,
+    #     name => 'relu1',
+    #     act_type => "relu");
 
-  # 2/ The second fully-connected layer and the corresponding activation function
-  my $fc2  = mx->sym->FullyConnected(
-    data => $data,
-    name => 'fct2',
-    num_hidden => 64);
-  my $act2 = mx->sym->Activation(
-    data => $fc2,
-    name => 'relu2',
-    act_type => "relu");
+    # 2/ The second fully-connected layer and the corresponding activation function
+    my $fc2    = mx->sym->FullyConnected(
+        data => $data,
+        name => 'fct2',
+        num_hidden => 64);
+    my $act2 = mx->sym->Activation(
+        data => $fc2,
+        name => 'relu2',
+        act_type => "relu");
 
-  # 3/ MNIST has 10 classes
-  # It is common to put a softmax at the end and a last vecotr of size of the output (I have 0..9 possibilities)
-  my $fc3  = mx->sym->FullyConnected(
-    data => $act2,
-    name => 'fct3',
-    num_hidden => 10);
-  # Softmax with cross entropy loss
-  my $mlp = mx->sym->SoftmaxOutput(
-    data => $fc3,
-    name => 'softmax');
+    # 3/ MNIST has 10 classes
+    # It is common to put a softmax at the end and a last vecotr of size of the output (I have 0..9 possibilities)
+    my $fc3    = mx->sym->FullyConnected(
+        data => $act2,
+        name => 'fct3',
+        num_hidden => 10);
+    # Softmax with cross entropy loss
+    my $mlp = mx->sym->SoftmaxOutput(
+        data => $fc3,
+        name => 'softmax');
 
-  return $mlp;
+    return $mlp;
 }
 
 
@@ -114,3 +119,71 @@ sub nn_conv {
     my $softmax = mx->symbol->SoftmaxOutput(data => $fc3, name => 'softmax');
     return $softmax;
 }
+
+
+# Strbuild info <- PDL::IO::Image
+sub get_image_info{
+    my $pimage1 = shift;
+    use overload '.' => sub { shift . "\n" . shift  };
+    return "\n"
+        . 'width       = ' . $pimage1->get_width . "\n"
+        . 'height      = ' . $pimage1->get_height . "\n"
+        . 'image_type  = ' . $pimage1->get_image_type . "\n"
+        . 'color_type  = ' . $pimage1->get_color_type . "\n"
+        . 'colors_used = ' . $pimage1->get_colors_used . "\n"
+        . 'bpp         = ' . $pimage1->get_bpp . "\n";
+}
+
+
+# Read image on HD and convert it to 1 bytes x 28x28
+sub read_image{
+    # 0/ In
+    my $path = shift;
+    unless ($path) {die "read_iamge no argument !!"}
+
+    # 1/ Read HD
+    my $im = PDL::IO::Image->new_from_file($path);
+    say "Readen im: " . get_image_info $im;
+
+    # 2.1/ Convert image
+    $im->convert_image_type("BITMAP"); # Usually useless
+    $im->rescale(28, 28);
+    my $b_keep_alpha = not $im->get_colors_used;
+    unless ($b_keep_alpha){
+        $im->color_to_8bpp;
+    }
+    $im->save("middle_img.png");
+    say "Transformed im: " . get_image_info $im;
+
+    # 2.2/ Convert format
+    my $pdl = $im->pixels_to_pdl();
+    say "Initial pdl " . $pdl->info; 
+	$pdl->set_datatype($PDL::Types::PDL_B);
+    # Get alpha channel TODO according to image type
+    if ($b_keep_alpha){
+        $pdl = $pdl->slice(':,:,3');
+    }
+    # Force reshape for all to fall in line uselessly in 3 dims
+    $pdl->reshape(28, 28, 1)->float / 255;
+    say "Final pdl " . $pdl->info; 
+
+    # 3/ Ret
+    return $pdl;
+}
+
+
+# Load IA model
+sub read_model{
+    my $test_iter = shift;
+	my $data = mx->sym->Variable('data');
+	my $mlp = nn_perceptron($data);
+	my $model = mx->mod->Module(symbol=> $mlp,);
+	my ($sym, $arg_params, $aux_params ) = $model->load_checkpoint('mycheckpoint.dp', 3);
+	$model->bind(
+		data_shapes => $test_iter->provide_data,
+	);
+	$model->set_params($arg_params, $aux_params);
+	return $model;
+}
+
+
