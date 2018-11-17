@@ -1,14 +1,20 @@
 use strict; use warnings; use v5.26;
-say "< Including mnist model module v1.0";
 
-use Log::Message::Simple qw/debug/;
-
-
-
+use LWP::UserAgent ();  # For download
+use AI::MXNet ('mx', 'nd');   # For Neuronal Networks
+use PDL;             # Perl Data Language for Images "parsing"
+use PDL::Math;
+use PDL::IO::Image;     # To dump the images
+use PDL::IO::FlexRaw;    # To read images
 
 
 # Placeholder for the input layer
 my $data = mx->sym->Variable('data');
+
+
+sub p {
+    if(our $verbose){ say @_ };
+}
 
 
 sub download_data {
@@ -18,7 +24,7 @@ sub download_data {
     my $label_url = "${url}t10k-labels-idx1-ubyte.gz";
     my $fname = (split /\//, $url)[-1];
     if (@_ > 1) {
-        say "I am not downloading";
+        p "I am not downloading";
         return $fname;
     }
 
@@ -42,7 +48,7 @@ sub print_pdl{
     my $pdl = shift;
     my $flex = pdl(0.01);
     $pdl = PDL::Math::floor($pdl / $flex) * $flex ;
-    say "Score matrix:", $pdl;
+    p "Score matrix:", $pdl;
 }
 
 
@@ -143,7 +149,7 @@ sub read_image{
 
     # 1/ Read HD
     my $im = PDL::IO::Image->new_from_file($path);
-    say "Readen im: " . get_image_info $im;
+    p "Readen im: " . get_image_info $im;
 
     # 2.1/ Convert image
     $im->convert_image_type("BITMAP"); # Usually useless
@@ -153,19 +159,19 @@ sub read_image{
         $im->color_to_8bpp;
     }
     $im->save("middle_img.png");
-    say "Transformed im: " . get_image_info $im;
+    p "Transformed im: " . get_image_info $im;
 
     # 2.2/ Convert format
     my $pdl = $im->pixels_to_pdl();
-    say "Initial pdl " . $pdl->info; 
+    p "Initial pdl " . $pdl->info; 
 	$pdl->set_datatype($PDL::Types::PDL_B);
     # Get alpha channel TODO according to image type
     if ($b_keep_alpha){
         $pdl = $pdl->slice(':,:,3');
     }
     # Force reshape for all to fall in line uselessly in 3 dims
-    $pdl->reshape(28, 28, 1)->float / 255;
-    say "Final pdl " . $pdl->info; 
+    $pdl->reshape(28, 28, 1);
+    p "Final pdl " . $pdl->info; 
 
     # 3/ Ret
     return $pdl;
