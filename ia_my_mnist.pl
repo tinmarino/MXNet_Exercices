@@ -11,17 +11,65 @@ use File::Basename;
 use lib dirname (__FILE__);
 
 # Load models
-use ia_mnist_model qw/nn_perceptron/;
+use ia_mnist_model qw/nn_perceptron download_data/;
 
 
-print "--> Starting Script\n";
+# TODO remove globals
 my($magic, $num, $rows, $cols);
 
+# TODO # Fix the seed
+# TODO kO  # Set the compute context, GPU is available otherwise CPU
+# Create a place holder variable for the input data
+
+################################################################################
+print "--> Starting Script\n";
+
+# Placeholder for the input layer
+my $data = mx->sym->Variable('data');
+
+
+
+# Read the data from internet
+my $path='http://yann.lecun.com/exdb/mnist/';
+print "---> Donwloading training\n";
+my($train_lbl, $train_img) = read_data(
+    "${path}train-labels-idx1-ubyte.gz", "${path}train-images-idx3-ubyte.gz");
+print "---> Donwloading validation\n";
+my($val_lbl, $val_img) = read_data(
+    "${path}t10k-labels-idx1-ubyte.gz", "${path}t10k-images-idx3-ubyte.gz");
+
+
+
+# Define the model
+#my $mlp = $ARGV[0] ? 
+sub get_model {
+    my $mlp; my $ctx;
+    if ($ARGV[0]) {
+        $ctx = mx->gpu();
+        $mlp = nn_conv($data);
+        say "I am using gpu 0";
+    } else {
+        $ctx = mx->cpu();
+        $mlp = nn_perceptron($data);
+        say "I am using (only) cpu";
+    }
+    my $model = mx->mod->Module(
+      symbol => $mlp,
+      context => $ctx,
+      );
+    return $model;
+}
+
+my $model = get_model();
+fit($model) and save($model);
+print "<-- Script Finished\n";
+
+################################################################################
 
 sub read_data {
   my($label_url, $image_url) = @_;
 
-  open my($flbl), '<:gzip', download_data($label_url, 1);
+  open my($flbl), '<:gzip', download_data($label_url, 0) or die "Cannot open input images";
   read $flbl, my($buf), 8;
   ($magic, $num) = unpack 'N2', $buf;
   my $label = PDL->new();
@@ -30,7 +78,7 @@ sub read_data {
   read $flbl, ${$label->get_dataref}, $num;
   $label->upd_data();
 
-  open my($fimg), '<:gzip', download_data($image_url, 1);
+  open my($fimg), '<:gzip', download_data($image_url, 0);
   read $fimg, $buf, 16;
   ($magic, $num, $rows, $cols) = unpack 'N4', $buf;
   my $image = PDL->new();
@@ -40,7 +88,7 @@ sub read_data {
   $image->upd_data();
 
   # Save it
-  save_image($image);
+  #save_image($image);
   return($label, $image);
 }
 
@@ -76,40 +124,9 @@ sub save_image {
 }
 
 
-# TODO # Fix the seed
-# TODO kO  # Set the compute context, GPU is available otherwise CPU
-# Create a place holder variable for the input data
-
-################################################################################
-
-# Placeholder for the input layer
-my $data = mx->sym->Variable('data');
 
 
-
-# Read the data from internet
-my $path='http://yann.lecun.com/exdb/mnist/';
-print "---> Donwloading training\n";
-my($train_lbl, $train_img) = read_data(
-    "${path}train-labels-idx1-ubyte.gz", "${path}train-images-idx3-ubyte.gz");
-print "---> Donwloading validation\n";
-my($val_lbl, $val_img) = read_data(
-    "${path}t10k-labels-idx1-ubyte.gz", "${path}t10k-images-idx3-ubyte.gz");
-
-
-
-# Define the model
-# TODO get gpu => convolutional
-#my $mlp = $ARGV[0] ? nn_conv($data) : nn_perceptron($data);
-my $mlp = nn_perceptron($data);
-my $ctx = $ARGV[0] ? mx->gpu(1) : mx->cpu();
-my $model = mx->mod->Module(
-  symbol => $mlp,
-  context => $ctx,
-  );
-
-
-# Work
+# Work <- Model 
 sub fit {
   say "--> Starting Fit";
 
@@ -137,15 +154,16 @@ sub fit {
     eval_metric => 'acc',  # report accuracy during training
     batch_end_callback => mx->callback->Speedometer($batch_size, 200), # output progress for each 100 data batches
   );
+    return 1;
 }
 
 
+# Remove and save <- model
+sub save {
+    say "Saving model to mycheckpoint.dp";
+    unlink 'mycheckpoint.dp';
+    $model->save_checkpoint('mycheckpoint.dp', 3);
+    return 1;
+}
 
-fit;
 
-$model->save_checkpoint('mycheckpoint.dp', 3);
-
-
-
-
-print "<-- Script Finished\n";
