@@ -24,26 +24,14 @@ my($magic, $num, $rows, $cols);
 ################################################################################
 print "--> Starting Script\n";
 
-# Placeholder for the input layer
-my $data = mx->sym->Variable('data');
-
-
-
-# Read the data from internet
-my $path='http://yann.lecun.com/exdb/mnist/';
-print "---> Donwloading training\n";
-my($train_lbl, $train_img) = read_data(
-    "${path}train-labels-idx1-ubyte.gz", "${path}train-images-idx3-ubyte.gz");
-print "---> Donwloading validation\n";
-my($val_lbl, $val_img) = read_data(
-    "${path}t10k-labels-idx1-ubyte.gz", "${path}t10k-images-idx3-ubyte.gz");
 
 
 
 # Define the model
-#my $mlp = $ARGV[0] ? 
 sub get_model {
     my $mlp; my $ctx;
+    # Placeholder for the input layer
+    my $data = mx->sym->Variable('data');
     if ($ARGV[0]) {
         $ctx = mx->gpu();
         $mlp = nn_conv($data);
@@ -94,7 +82,7 @@ sub read_data {
 
 sub save_image {
   # Many images
-  my($image) = @_[0];
+  my($image) = $_[0];
 
   # Write main
   my $im = $image->slice(":,:,:9")->copy;
@@ -124,35 +112,39 @@ sub save_image {
 }
 
 
+sub get_array_iter {
+    my($lbl, $img) = read_data(shift, shift);
+    my $iter = mx->io->NDArrayIter(
+	  data => to4d($img),
+	  label => $lbl,
+	  batch_size => 100,
+	  shuffle => 1,
+    );
+    return $iter;
+}
 
 
 # Work <- Model 
 sub fit {
   say "--> Starting Fit";
 
-  # Set params
-  my $batch_size = 100;
-  # Please keep the  declaration of nn that way (with the leading , and newline
-  my $train_iter = mx->io->NDArrayIter(
-	  data => to4d($train_img),
-	  label => $train_lbl,
-	  batch_size => $batch_size,
-	  shuffle => 1,
-  );
-  my $val_iter = mx->io->NDArrayIter(
-	  data => to4d($val_img),
-	  label => $val_lbl,
-	  batch_size => $batch_size,
-  );
+    # Read the data from internet
+    my $path='http://yann.lecun.com/exdb/mnist/';
+    say "---> Donwloading training";
+    my $train_iter = get_array_iter(
+        "${path}train-labels-idx1-ubyte.gz", "${path}train-images-idx3-ubyte.gz");
+    say "---> Donwloading validation";
+    my $val_iter = get_array_iter(
+        "${path}t10k-labels-idx1-ubyte.gz", "${path}t10k-images-idx3-ubyte.gz");
 
   $model->fit(
     $train_iter,  # train data
-    num_epoch => 8,  # train for at most 10 dataset passes
+    num_epoch => 3,  # train for at most 10 dataset passes
     eval_data => $val_iter,  # validation data
     optimizer => 'adam',  # use SGD to train  tochastic gradient descent
     # optimizer_params => {'learning_rate' => 0.1},  # use fixed learning rate
     eval_metric => 'acc',  # report accuracy during training
-    batch_end_callback => mx->callback->Speedometer($batch_size, 200), # output progress for each 100 data batches
+    batch_end_callback => mx->callback->Speedometer(100, 200), # output progress for each 100 data batches done for batch sie = 100
   );
     return 1;
 }
