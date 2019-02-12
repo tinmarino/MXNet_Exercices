@@ -17,19 +17,16 @@ sub p {
 }
 
 
+# Download Mnist data (s_url, b_force -> file)
 sub download_data {
+    my $url = shift;
     my $force_download = shift;
 
-    my $url='http://yann.lecun.com/exdb/mnist/';
-    my $label_url = "${url}t10k-labels-idx1-ubyte.gz";
+    p "Loading " . $url;
+
     my $fname = (split /\//, $url)[-1];
-    if (@_ > 1) {
-        p "I am not downloading";
-        return $fname;
-    }
 
     my $ua = LWP::UserAgent->new();
-    $force_download = 1 if @_ < 2;
     if($force_download or not -f $fname) {
         $ua->get($url, ':content_file' => $fname);
     }
@@ -37,13 +34,14 @@ sub download_data {
 }
 
 
-
+# Convert (img -> 4d)
 sub to4d {
     my($img) = @_;
     return $img->reshape(28, 28, 1, ($img->dims)[2])->float / 255;
 }
 
 
+# Helper
 sub print_pdl{
     my $pdl = shift;
     my $flex = pdl(0.01);

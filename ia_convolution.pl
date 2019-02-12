@@ -6,6 +6,8 @@ use warnings;
 use AI::MXNet qw(mx);
 use AI::MXNet::TestUtils qw(GetMNIST_ubyte);
 use Test::More tests => 1;
+
+
 # symbol net
 my $batch_size = 100;
 ### model

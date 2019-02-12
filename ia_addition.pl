@@ -1,7 +1,5 @@
+use strict; use warnings; use v5.26;
 
-#!/usr/bin/perl
-use strict;
-use warnings;
 use AI::MXNet ('mx');
 
 ## preparing the samples
@@ -56,9 +54,8 @@ sub nn_fc {
         num_hidden => 1
     );
 
-    # 4/ Is that softmax ?
-    return mx->sym->MAERegressionOutput(data => $fc, 
-                        name => 'softmax');
+    # 4/ Softmax
+    return mx->sym->MAERegressionOutput(data => $fc, name => 'softmax');
 }
 
 
@@ -156,4 +153,3 @@ print "1 + 1 = ", $add->(1, 1), "\n";
 print "188 - 88 ≈ ", $sub->(188, 88), "\n";
 print "250 * 2 ≈ ", $mul->(250, 2), "\n";
 print "250 / 2 ≈ ", $div->(250, 2), "\n";
-
