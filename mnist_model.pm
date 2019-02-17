@@ -6,37 +6,29 @@ use PDL;             # Perl Data Language for Images "parsing"
 use PDL::Math;
 use PDL::IO::Image;     # To dump the images
 use PDL::IO::FlexRaw;    # To read images
+use Function::Parameters;
 
 
-# Placeholder for the input layer
-my $data = mx->sym->Variable('data');
+# Logger
+sub p { if(our $verbose){ say @_ }; }
 
 
-sub p {
-    if(our $verbose){ say @_ };
-}
-
-
-# Download Mnist data (s_url, b_force -> file)
-sub download_data {
-    my $url = shift;
-    my $force_download = shift;
-
+# Download Mnist data : (s_url) -> s_file_created
+fun download_data ($url) {
     p "Loading " . $url;
 
-    my $fname = (split /\//, $url)[-1];
+    my $fname = "data/" . (split /\//, $url)[-1];
 
     my $ua = LWP::UserAgent->new();
-    if($force_download or not -f $fname) {
-        $ua->get($url, ':content_file' => $fname);
-    }
+    -f $fname
+        and say "Ok : $url was already downloaded in the past to $fname"
+        or $ua->get($url, ':content_file' => $fname);
     return $fname;
 }
 
 
-# Convert (img -> 4d)
-sub to4d {
-    my($img) = @_;
+# Convert : img -> 4d
+fun to4d ($img) {
     return $img->reshape(28, 28, 1, ($img->dims)[2])->float / 255;
 }
 
@@ -59,19 +51,18 @@ sub nn_perceptron {
     $data = mx->sym->Flatten(data => $data);
 
     # 1/ The first fully-connected layer and the corresponding activation function
-    # TODO read the doc about how many activation type I can get (like relu)
-    # my $fc1    = mx->sym->FullyConnected(
-    #     data => $data,
-    #     name => 'fct1',
-    #     num_hidden => 128);
-    # my $act1 = mx->sym->Activation(
-    #     data => $fc1,
-    #     name => 'relu1',
-    #     act_type => "relu");
+    my $fc1 = mx->sym->FullyConnected(
+        data => $data,
+        name => 'fct1',
+        num_hidden => 128);
+    my $act1 = mx->sym->Activation(
+        data => $fc1,
+        name => 'relu1',
+        act_type => "relu");
 
     # 2/ The second fully-connected layer and the corresponding activation function
-    my $fc2    = mx->sym->FullyConnected(
-        data => $data,
+    my $fc2 = mx->sym->FullyConnected(
+        data => $act1,
         name => 'fct2',
         num_hidden => 64);
     my $act2 = mx->sym->Activation(
@@ -81,7 +72,7 @@ sub nn_perceptron {
 
     # 3/ MNIST has 10 classes
     # It is common to put a softmax at the end and a last vecotr of size of the output (I have 0..9 possibilities)
-    my $fc3    = mx->sym->FullyConnected(
+    my $fc3 = mx->sym->FullyConnected(
         data => $act2,
         name => 'fct3',
         num_hidden => 10);
@@ -191,3 +182,4 @@ sub read_model{
 }
 
 
+1;
