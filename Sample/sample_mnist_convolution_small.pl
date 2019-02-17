@@ -1,8 +1,7 @@
 ## Convolutional NN for recognizing hand-written digits in MNIST dataset
 ## It's considered "Hello, World" for Neural Networks
 ## For more info about the MNIST problem please refer to http://neuralnetworksanddeeplearning.com/chap1.html
-use strict;
-use warnings;
+use strict; use warnings; use v5.26;
 use AI::MXNet qw(mx);
 use AI::MXNet::TestUtils qw(GetMNIST_ubyte);
 use Test::More tests => 1;
