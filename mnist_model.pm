@@ -163,19 +163,32 @@ fun read_image ($path) {
 }
 
 
+sub get_checkpoint_filename {
+    return 'data/mnist_checkpoint.dp';
+}
+
+
 # Load IA model
 sub read_model{
     my $test_iter = shift;
 	my $data = mx->sym->Variable('data');
 	my $mlp = nn_perceptron($data);
 	my $model = mx->mod->Module(symbol=> $mlp,);
-	my ($sym, $arg_params, $aux_params ) = $model->load_checkpoint('mycheckpoint.dp', 3);
+	my ($sym, $arg_params, $aux_params ) = $model->load_checkpoint(get_checkpoint_filename, 3);
 	$model->bind(
 		data_shapes => $test_iter->provide_data,
 	);
 	$model->set_params($arg_params, $aux_params);
 	return $model;
 }
+
+# Remove and save : model
+fun save ($model){
+    say "Saving model to " . get_checkpoint_filename;
+    $model->save_checkpoint(get_checkpoint_filename, 3);
+    return 1;
+}
+
 
 
 1;

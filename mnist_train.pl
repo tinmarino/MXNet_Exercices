@@ -138,15 +138,6 @@ fun fit($model) {
 }
 
 
-# Remove and save : model
-fun save ($model){
-    say "Saving model to mycheckpoint.dp";
-    unlink 'mycheckpoint.dp';
-    $model->save_checkpoint('mycheckpoint.dp', 3);
-    return 1;
-}
-
-
 sub main {
     print "--> Starting Script\n";
     my $model = get_model();

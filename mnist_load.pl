@@ -15,14 +15,14 @@ use File::Basename;
 use lib dirname (__FILE__);
 
 # Include models
-use ia_mnist_model qw/nn_perceptron/;
+use mnist_model qw/nn_perceptron/;
 
 say "--> Starting Script V1.0";
 
 
 # Load PDL image
 sub read_image {
-	my $im = readflex('testmain.dp');
+	my $im = readflex('data/testmain.dp');
 	my $rows = 28;
 	my $cols = 28;
 	my $num = 10;
@@ -64,7 +64,7 @@ sub read_model{
 		data_shapes => $test_iter->provide_data, 
 		label_shapes => $test_iter->provide_label,
 	);
-	my ($sym, $arg_params, $aux_params ) = $model->load_checkpoint('mycheckpoint.dp', 3);
+	my ($sym, $arg_params, $aux_params ) = $model->load_checkpoint(get_checkpoint_filename, 3);
 	$model->set_params($arg_params, $aux_params);
 	return $model;
 }
