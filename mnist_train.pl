@@ -91,12 +91,12 @@ sub save_image {
         print "typeof to_dump  for ${i} : " . ref($im) . " and length " . PDL::nelem($im) . "\n";
 
         # Write array
-        writeflex("test_${i}.dp", $im);
+        writeflex("data/test_${i}.dp", $im);
 
         # Write png
         my $v2 = $im->byte;
         my $pimage2 = PDL::IO::Image->new_from_pdl($v2);
-        $pimage2->save("output_${i}.jpg");
+        $pimage2->save("data/output_${i}.jpg");
     }
 }
 
