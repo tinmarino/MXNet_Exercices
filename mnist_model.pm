@@ -131,11 +131,7 @@ sub get_image_info{
 
 
 # Read image on HD and convert it to 1 bytes x 28x28
-sub read_image{
-    # 0/ In
-    my $path = shift;
-    unless ($path) {die "read_iamge no argument !!"}
-
+fun read_image ($path) {
     # 1/ Read HD
     my $im = PDL::IO::Image->new_from_file($path);
     p "Readen im: " . get_image_info $im;

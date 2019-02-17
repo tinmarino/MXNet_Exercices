@@ -63,7 +63,7 @@ sub read_data {
     $image->upd_data();
 
     # Save it
-    #save_image($image);
+    save_image($image);
     return($label, $image);
 }
 
@@ -78,7 +78,7 @@ sub save_image {
     $im->setdims([ $rows, $cols, 10]);
     $im->upd_data();
     print "typeof to_dump  for main  : " . ref($im) . " and length " . PDL::nelem($im) . "\n";
-    writeflex("testmain.dp", $im);
+    writeflex("data/testmain.dp", $im);
 
 
     # Slice

@@ -15,14 +15,14 @@ use File::Basename;
 use lib dirname (__FILE__);
 
 # Include models
-use ia_mnist_model qw/nn_perceptron/;
+use mnist_model qw/nn_perceptron/;
 
 say "--> Starting Script V1.0";
 
 
 # Load PDL image
-sub read_image {
-	my $im = readflex('testmain.dp');
+sub read_image_local {
+	my $im = readflex('data/testmain.dp');
 	#open my($test1), "test1.dp";
 	#my $im = PDL->new();
 	my $rows = 28;
@@ -36,7 +36,7 @@ sub read_image {
 }
 
 # Load PDL label
-sub read_label {
+sub read_label_local {
 	open my($flbl), '<:gzip', download_data(1);
 	my $label = PDL->new();
 	$label->set_datatype($PDL::Types::PDL_B);
@@ -50,8 +50,8 @@ sub read_label {
 
 # Score with the accuracy metric
 my $test_iter = mx->io->NDArrayIter(
-    data => read_image,
-    label => read_label,
+    data => read_image_local,
+    label => read_label_local,
 );
 
 
@@ -77,7 +77,7 @@ my $val = read_model->predict($test_iter);
 
 my $pdl = $val->aspdl;
 my $flex = pdl(0.01);
-my $pdl = PDL::Math::floor($pdl / $flex) * $flex ;
+$pdl = PDL::Math::floor($pdl / $flex) * $flex ;
 say "score is ", $pdl;
 
 
