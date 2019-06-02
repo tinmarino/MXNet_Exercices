@@ -7,7 +7,7 @@ use File::Basename;
 use lib dirname (__FILE__);
 
 # Include models
-use mnist_model qw/nn_perceptron/;
+use model;
 
 # Usage
 sub usage{

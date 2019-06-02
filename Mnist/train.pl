@@ -12,7 +12,7 @@ use File::Basename;
 use lib dirname (__FILE__);
 
 # Load models
-use mnist_model qw/nn_perceptron download_data/;
+use model qw/download_data/;
 
 my($rows, $cols);  # 28, 28
 
@@ -94,17 +94,21 @@ sub get_array_iter {
 
 # Work <- Model 
 fun fit($model) {
+    # Hi
+    our $verbose = 1;
+    p '--> Going to train on Mnist net hadwritten dataset';
+
     # Read the data from internet
     my $path='http://yann.lecun.com/exdb/mnist/';
-    say "---> Donwloading training";
+    p "---> Downloading training";
     my $train_iter = get_array_iter(
         "${path}train-labels-idx1-ubyte.gz", "${path}train-images-idx3-ubyte.gz");
-    say "---> Donwloading validation";
+    p "---> Downloading validation";
     my $val_iter = get_array_iter(
         "${path}t10k-labels-idx1-ubyte.gz", "${path}t10k-images-idx3-ubyte.gz");
 
     # Fit
-    say "--> Starting Fit";
+    p "--> Starting Fit";
     $model->fit(
         $train_iter,            # train data
         num_epoch => 3,         # train for at most 10 dataset passes

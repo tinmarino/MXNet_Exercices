@@ -22,7 +22,7 @@ say "--> Starting Script V1.0";
 
 # Load PDL image
 sub read_image_local {
-	my $im = readflex('data/testmain.dp');
+	my $im = readflex('../data/testmain.dp');
 	#open my($test1), "test1.dp";
 	#my $im = PDL->new();
 	my $rows = 28;

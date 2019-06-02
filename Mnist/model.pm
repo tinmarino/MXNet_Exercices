@@ -18,12 +18,14 @@ sub p { if(our $verbose){ say @_ }; }
 fun download_data ($url) {
     p "Loading " . $url;
 
-    my $fname = "data/" . (split /\//, $url)[-1];
+    my $fname = dirname(__FILE__) . "/../data/" . (split /\//, $url)[-1];
+    p 'Name ' . $fname;
 
     my $ua = LWP::UserAgent->new();
     -f $fname
-        and say "Ok : $url was already downloaded in the past to $fname"
-        or $ua->get($url, ':content_file' => $fname);
+        and p "Ok : $url was already downloaded in the past to $fname"
+        or p "Working : I must get sample from net"
+            and $ua->get($url, ':content_file' => $fname);
     return $fname;
 }
 
@@ -152,7 +154,7 @@ fun read_image ($path) {
     unless ($b_keep_alpha){
         $im->color_to_8bpp;
     }
-    $im->save("data/middle_img.png");
+    $im->save(dirname(__FILE__) . '/../data/middle_img.png');
     p "Transformed im: " . get_image_info $im;
 
     # 2.2/ Convert format
@@ -181,7 +183,7 @@ sub get_checkpoint_filename {
     $ARGV[0]
         ? $suffix = '_gpu'
         : $suffix = '_cpu';
-    return 'data/mnist_checkpoint' . $suffix . '.dp';
+    return dirname(__FILE__) . '/../data/mnist_checkpoint' . $suffix . '.dp';
 }
 
 # Define the model
