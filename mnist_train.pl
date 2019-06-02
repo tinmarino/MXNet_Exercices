@@ -17,28 +17,6 @@ use mnist_model qw/nn_perceptron download_data/;
 # TODO hide that
 my($magic, $num, $rows, $cols);
 
-# Define the model
-sub get_model {
-    my $mlp; my $ctx;
-    # Placeholder for the input layer
-    my $data = mx->sym->Variable('data');
-    if ($ARGV[0]) {
-        $ctx = mx->gpu();
-        $mlp = nn_conv($data);
-        say "I am using gpu 0";
-    } else {
-        $ctx = mx->cpu();
-        $mlp = nn_perceptron($data);
-        say "I am using (only) cpu";
-    }
-    my $model = mx->mod->Module(
-      symbol => $mlp,
-      context => $ctx,
-      );
-    return $model;
-}
-
-
 ################################################################################
 
 sub read_data {
@@ -140,8 +118,8 @@ fun fit($model) {
 
 sub main {
     print "--> Starting Script\n";
-    my $model = get_model();
-    fit($model) and save($model);
+    my $model = get_model;
+    fit($model) and save_model $model;
     print "<-- Script Finished\n";
 }
 

@@ -1,14 +1,13 @@
-# TODO load the pdl and the model and find good digit
 use strict; use warnings; use v5.26;
 
-use PDL::Ufunc;              # for max index in array
+#use PDL::Ufunc;              # for max index in array
 
 # Add script dir to path
 use File::Basename;
 use lib dirname (__FILE__);
 
 # Include models
-use ia_mnist_model qw/nn_perceptron/;
+use mnist_model qw/nn_perceptron/;
 
 sub usage{
     "Usage: " . __FILE__ . " img1.jpg [img2.jpg [...]]";

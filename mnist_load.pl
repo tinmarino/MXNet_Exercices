@@ -1,6 +1,3 @@
-#!/usr/bin/perl
-
-# TODO load the pdl and the model and find good digit
 use strict; use warnings; use v5.26;
 
 use LWP::UserAgent ();  # For download
@@ -21,7 +18,7 @@ say "--> Starting Script V1.0";
 
 
 # Load PDL image
-sub read_image {
+sub read_image_local {
 	my $im = readflex('data/testmain.dp');
 	my $rows = 28;
 	my $cols = 28;
@@ -48,14 +45,14 @@ sub read_label {
 
 # Score with the accuracy metric
 my $test_iter = mx->io->NDArrayIter(
-    data => read_image,
+    data => read_image_local,
     label => read_label,
 );
 
 
 
 # Load IA model
-sub read_model{
+sub read_model_local{
 	my $data = mx->sym->Variable('data');
 	my $mlp = nn_perceptron($data);
 	my $model = mx->mod->Module(symbol=> $mlp,);
@@ -70,12 +67,12 @@ sub read_model{
 }
 
 
-my $model = read_model;
-my $val = read_model->predict($test_iter);
+my $model = read_model_local;
+my $val = read_model_local->predict($test_iter);
 
 my $pdl = $val->aspdl;
 my $flex = pdl(0.01);
-my $pdl = PDL::Math::floor($pdl / $flex) * $flex ;
+$pdl = PDL::Math::floor($pdl / $flex) * $flex ;
 say "score is ", $pdl;
 
 
