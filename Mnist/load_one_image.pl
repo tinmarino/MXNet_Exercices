@@ -21,8 +21,9 @@ sub main {
     p "--> Starting " . __FILE__ . " V1.0";
     $ARGV[0] || die usage;
 
+    # Foreach input_files.jpg
     for my $path (@ARGV){
-        # Load
+        # Load model (with adecuate plaeceholder_in)
         my $test_iter = mx->io->NDArrayIter(
             data => read_image $path);
         my $model = read_model $test_iter;

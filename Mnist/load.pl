@@ -19,7 +19,7 @@ use mnist_model qw/nn_perceptron/;
 
 # Load PDL image
 sub read_image_local {
-	my $im = readflex('data/testmain.dp');
+	my $im = readflex('../data/testmain.dp');
 	my $rows = 28;
 	my $cols = 28;
 	my $num = 10;
