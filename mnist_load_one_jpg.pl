@@ -9,14 +9,15 @@ use lib dirname (__FILE__);
 # Include models
 use mnist_model qw/nn_perceptron/;
 
+# Usage
 sub usage{
     "Usage: " . __FILE__ . " img1.jpg [img2.jpg [...]]";
 }
 
-
+# Main 
 sub main {
     # Hi
-    our $verbose = 0;
+    our $verbose = 1;
     p "--> Starting " . __FILE__ . " V1.0";
     $ARGV[0] || die usage;
 
@@ -41,4 +42,5 @@ sub main {
     p "<-- End Script\n";
 }
 
+# Work
 main;

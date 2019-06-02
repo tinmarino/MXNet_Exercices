@@ -14,13 +14,14 @@ use lib dirname (__FILE__);
 # Load models
 use mnist_model qw/nn_perceptron download_data/;
 
-# TODO hide that
-my($magic, $num, $rows, $cols);
+my($rows, $cols);  # 28, 28
 
 ################################################################################
 
 sub read_data {
     my($label_url, $image_url) = @_;
+
+    my ($magic, $num);
 
     open my($flbl), '<:gzip', download_data($label_url)  or die "Cannot open input labels";
     read $flbl, my($buf), 8;
@@ -102,6 +103,7 @@ fun fit($model) {
     my $val_iter = get_array_iter(
         "${path}t10k-labels-idx1-ubyte.gz", "${path}t10k-images-idx3-ubyte.gz");
 
+    # Fit
     say "--> Starting Fit";
     $model->fit(
         $train_iter,            # train data
@@ -112,6 +114,8 @@ fun fit($model) {
         eval_metric => 'acc',  # report accuracy during training
         batch_end_callback => mx->callback->Speedometer(100, 200), # output progress for each 100 data batches done for batch sie = 100
     );
+
+    # Ret
     return 1;
 }
 

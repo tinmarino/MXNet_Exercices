@@ -1,14 +1,13 @@
 use strict; use warnings; use v5.26;
 
-use LWP::UserAgent ();  # For download
-use AI::MXNet ('mx', 'nd');   # For Neuronal Networks
-use PDL;             # Perl Data Language for Images "parsing"
+# Module
+use AI::MXNet ('mx', 'nd');     # Neuronal Networks
+use LWP::UserAgent ();          # Download
+use PDL;                        # Perl Data Language for Images "parsing"
 use PDL::Math;
-use PDL::IO::Image;     # To dump the images
-use PDL::IO::FlexRaw;    # To read images
-use Function::Parameters;
-
-
+use PDL::IO::Image;             # Dump the images
+use PDL::IO::FlexRaw;           # Read images
+use Function::Parameters;       # Define function with parameters inside
 
 
 # Logger
@@ -79,6 +78,7 @@ sub nn_perceptron {
         data => $fc3,
         name => 'softmax');
 
+    # Ret
     return $mlp;
 }
 
@@ -89,7 +89,12 @@ sub nn_conv {
 	my $data = mx->sym->Variable('data');
 
     # 1 layer
-    my $conv1= mx->symbol->Convolution(data => $data, name => 'conv1', num_filter => 20, kernel => [5,5], stride => [2,2]);
+    my $conv1= mx->symbol->Convolution(
+        data => $data,
+        name => 'conv1',
+        num_filter => 20,
+        kernel => [5,5],
+        stride => [2,2]);
     my $bn1  = mx->symbol->BatchNorm(data => $conv1, name => "bn1");
     my $act1 = mx->symbol->Activation(data => $bn1, name => 'relu1', act_type => "relu");
     my $mp1  = mx->symbol->Pooling(data => $act1, name => 'mp1', kernel => [2,2], stride =>[1,1], pool_type=>'max');
@@ -114,6 +119,8 @@ sub nn_conv {
     # 5 layer
     my $fc3  = mx->symbol->FullyConnected(data => $act4, name=>'fc3', num_hidden=>10);
     my $softmax = mx->symbol->SoftmaxOutput(data => $fc3, name => 'softmax');
+
+    # Ret
     return $softmax;
 }
 
@@ -145,7 +152,7 @@ fun read_image ($path) {
     unless ($b_keep_alpha){
         $im->color_to_8bpp;
     }
-    $im->save("middle_img.png");
+    $im->save("data/middle_img.png");
     p "Transformed im: " . get_image_info $im;
 
     # 2.2/ Convert format
@@ -158,16 +165,23 @@ fun read_image ($path) {
     }
     # Force reshape for all to fall in line uselessly in 3 dims
     $pdl->reshape(28, 28, 1);
+
+    # 3/ 
+    $pdl = to4d $pdl;
     p "Final pdl " . $pdl->info; 
 
-    # 3/ Ret
+    # Ret
     return $pdl;
 }
 
 
 # Get name of model checkpoint : Null -> s_filename
 sub get_checkpoint_filename {
-    return 'data/mnist_checkpoint.dp';
+    my $suffix = '_unk';
+    $ARGV[0]
+        ? $suffix = '_gpu'
+        : $suffix = '_cpu';
+    return 'data/mnist_checkpoint' . $suffix . '.dp';
 }
 
 # Define the model
@@ -193,12 +207,12 @@ sub get_model {
 
 # Load IA model
 fun read_model($test_iter) {
-	my $mlp = nn_conv ;
-	my $model = mx->mod->Module(symbol=> $mlp);
-	my ($sym, $arg_params, $aux_params ) = $model->load_checkpoint(get_checkpoint_filename, 3);
+	my $mlp = nn_perceptron;
+	my $model = mx->mod->Module(symbol=> $mlp,);
 	$model->bind(
 		data_shapes => $test_iter->provide_data,
 	);
+	my ($sym, $arg_params, $aux_params) = $model->load_checkpoint(get_checkpoint_filename, 3);
 	$model->set_params($arg_params, $aux_params);
 	return $model;
 }
